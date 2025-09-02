@@ -8,77 +8,128 @@
 import WidgetKit
 import SwiftUI
 
-struct Provider: AppIntentTimelineProvider {
+struct Provider: TimelineProvider {
+    typealias Entry = SimpleEntry
+    
     // Method to retrieve the data from flutter
-    private func getDataFromFlutter() async -> SimpleEntry {
-        let userDefault = UserDefaults(suiteName: "group.homeScreenApp")
-        let textfromflutterapp = userDefault?.string(forKey: "text_from_flutter")
-        return SimpleEntry(date: Date(), title: textfromflutterapp ?? "No data")
+    private func getDataFromFlutter() -> SimpleEntry {
+        let userDefault = UserDefaults(suiteName: "group.com.example.homeWidgets")
+        
+        // Print all keys in UserDefaults for debugging
+        if let userDefault = userDefault, let keys = userDefault.dictionaryRepresentation().keys as? [String] {
+            print("Available keys in UserDefaults: \(keys)")
+        }
+        
+        // Match the exact keys used in Flutter's HadithWidgetProvider
+        let narrator = userDefault?.string(forKey: "narrator") ?? "Unknown"
+        let text = userDefault?.string(forKey: "text") ?? "No hadith available"
+        let reference = userDefault?.string(forKey: "reference") ?? ""
+        let lastUpdated = userDefault?.string(forKey: "last_updated")
+        
+        var date = Date()
+        if let lastUpdatedString = lastUpdated {
+            let formatter = ISO8601DateFormatter()
+            if let parsedDate = formatter.date(from: lastUpdatedString) {
+                date = parsedDate
+            }
+        }
+        
+        return SimpleEntry(date: date, narrator: narrator, text: text, reference: reference)
     }        
     
-    // preview in widget gallery
+    // Required: preview placeholder
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), title: "Placeholder")
+        SimpleEntry(date: Date(), narrator: "Abu Hurairah", text: "The best of you are those who are best to their families.", reference: "Bukhari: 123")
     }
     
-    // widget gallery / selection preview
-    func snapshot(for configuration: ConfigurationAppIntent, in context: Context) async -> SimpleEntry {
-        return await getDataFromFlutter()
+    // Required: widget gallery preview
+    func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> Void) {
+        let entry = getDataFromFlutter()
+        completion(entry)
     }
 
-    // actual widget on home screen
-    func timeline(for configuration: ConfigurationAppIntent, in context: Context) async -> Timeline<SimpleEntry> {
-        let entry = await getDataFromFlutter()
+    // Required: timeline for widget updates
+    func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> Void) {
+        let entry = getDataFromFlutter()
         // Refresh every 15 minutes
         let refreshDate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
-        return Timeline(entries: [entry], policy: .after(refreshDate))
+        let timeline = Timeline(entries: [entry], policy: .after(refreshDate))
+        completion(timeline)
     }
 }
 
 // This represents the data that is passed to the widget
 struct SimpleEntry: TimelineEntry {
     let date: Date
-    let title: String
+    let narrator: String
+    let text: String
+    let reference: String
 }
 
 // This represents the view that is displayed in the widget
 struct MyHomeWidgetEntryView : View {
     var entry: Provider.Entry
+    @Environment(\.widgetFamily) var family
 
     var body: some View {
-        VStack(spacing: 8) {
-            Text("Counter Value")
-                .font(.headline)
-                .foregroundColor(.primary)
-            
-            Text(entry.title)
-                .font(.system(size: 36, weight: .bold))
-                .foregroundColor(.blue)
-            
-            Text("Last Updated:")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            Text(entry.date, style: .time)
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .padding()
+        // Use widgetURL instead of Button with intent for iOS 16 compatibility
+        ZStack {
+                Color(red: 0.95, green: 0.95, blue: 1.0)
+                    .cornerRadius(16)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Daily Hadith")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Text(entry.narrator)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.blue)
+                        .lineLimit(1)
+                    
+                    Text(entry.text)
+                        .font(family == .systemSmall ? .caption : .body)
+                        .foregroundColor(.primary)
+                        .lineLimit(family == .systemSmall ? 3 : 6)
+                        .multilineTextAlignment(.leading)
+                    
+                    Spacer(minLength: 2)
+                    
+                    HStack {
+                        Text(entry.reference)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        
+                        Spacer()
+                        
+                        Text("Updated: ")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        
+                        Text(entry.date, style: .time)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(12)
+            }
+            .widgetURL(URL(string: "hadithwidget://hadith_widget_clicked"))
     }
 }
 
 // The main widget configuration
 struct MyHomeWidget: Widget {
-    let kind: String = "MyHomeWidget"
+    let kind: String = "hadith_widget"
 
     var body: some WidgetConfiguration {
-        AppIntentConfiguration(kind: kind, intent: ConfigurationAppIntent.self, provider: Provider()) { entry in
+        StaticConfiguration(kind: kind, provider: Provider()) { entry in
             MyHomeWidgetEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
         .supportedFamilies([.systemSmall, .systemMedium])
-        .configurationDisplayName("Flutter Counter")
-        .description("Displays counter value from Flutter app")
+        .configurationDisplayName("Daily Hadith")
+        .description("Displays a daily Hadith from Bukhari collection")
     }
 }
 
@@ -99,6 +150,6 @@ struct MyHomeWidget: Widget {
 #Preview(as: .systemSmall) {
     MyHomeWidget()
 } timeline: {
-    SimpleEntry(date: .now, title: "0")
-    SimpleEntry(date: .now, title: "0")
+    SimpleEntry(date: .now, narrator: "Abu Hurairah", text: "The best of you are those who are best to their families.", reference: "Bukhari: 123")
+    SimpleEntry(date: .now, narrator: "Aisha", text: "The most beloved of deeds to Allah is that which is done regularly, even if it is small.", reference: "Bukhari: 456")
 }

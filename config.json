@@ -1,0 +1,9 @@
+{
+    "telegram_chat_id": "",
+    "botToken": "",
+    "geminiApiKey":"",
+    "openAiApiKey": "",
+    "deepSeekApiKey": "",
+    "geminiModelName":""
+}
+

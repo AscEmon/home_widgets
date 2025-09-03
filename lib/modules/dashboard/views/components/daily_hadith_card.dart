@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:home_widgets/utils/service/hadith_widget_service.dart';
+
 import '/global/widget/global_text.dart';
-import '/modules/hadith/bloc/hadith_bloc.dart';
-import '/modules/hadith/bloc/hadith_event.dart';
-import '/modules/hadith/bloc/hadith_state.dart';
-import '/modules/hadith/model/hadith_model.dart';
-import '/modules/hadith/model/hadith_widget_model.dart';
-import '/modules/hadith/service/hadith_widget_provider.dart';
+import '/modules/dashboard/bloc/dashboard_bloc.dart';
+import '/modules/dashboard/bloc/dashboard_event.dart';
+import '/modules/dashboard/bloc/dashboard_state.dart';
 import '/utils/enum.dart';
 import '/utils/styles/k_colors.dart';
+import '../../model/hadith_model.dart';
 
 class DailyHadithCard extends StatelessWidget {
   const DailyHadithCard({super.key});
@@ -18,16 +18,20 @@ class DailyHadithCard extends StatelessWidget {
   void _updateWidget(HadithModel hadith) async {
     try {
       // Create widget model from hadith model
-      final widgetModel = HadithWidgetModel(
+      final widgetModel = HadithModel(
         id: hadith.id,
         narrator: hadith.narrator,
         text: hadith.text,
         reference: hadith.reference,
-        updatedAt: DateTime.now(),
+        chapter: hadith.chapter,
+        bookNumber: hadith.bookNumber,
+        hadithNumber: hadith.hadithNumber,
+        date: DateTime.now(),
+        title: hadith.title,
       );
 
       // Update the widget
-      await HadithWidgetProvider.updateDailyHadithWidget(widgetModel);
+      await HadithWidgetService.saveDailyHadithForWidget(widgetModel);
     } catch (e) {
       // Silently handle errors - widget update should not affect app functionality
       debugPrint('Failed to update widget: $e');
@@ -40,7 +44,7 @@ class DailyHadithCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: KColor.fill.color,
+        color: KColor.accent.color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -55,18 +59,18 @@ class DailyHadithCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.format_quote, color: KColor.primary.color, size: 24.w),
+              Icon(Icons.format_quote, color: KColor.accent.color, size: 24.w),
               SizedBox(width: 8.w),
               GlobalText(
                 str: "Daily Hadith",
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: KColor.primary.color,
+                color: KColor.accent.color,
               ),
             ],
           ),
           SizedBox(height: 16.h),
-          BlocBuilder<HadithBloc, HadithState>(
+          BlocBuilder<DashboardBloc, DashboardState>(
             buildWhen:
                 (previous, current) =>
                     previous.dailyHadithStatus != current.dailyHadithStatus ||
@@ -88,9 +92,7 @@ class DailyHadithCard extends StatelessWidget {
                       SizedBox(height: 8.h),
                       ElevatedButton(
                         onPressed: () {
-                          context.read<HadithBloc>().add(
-                            const FetchDailyHadith(),
-                          );
+                          context.read<DashboardBloc>().add(FetchDailyHadith());
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: KColor.primary.color,
@@ -114,25 +116,23 @@ class DailyHadithCard extends StatelessWidget {
                     GlobalText(
                       str: state.dailyHadith!.narrator,
                       fontSize: 14,
-                      color: KColor.secondary.color,
-                      fontWeight: FontWeight.w500,
+                      color: KColor.accent.color,
+                      fontWeight: FontWeight.w900,
                     ),
                     SizedBox(height: 8.h),
                     GlobalText(
-                      str:
-                          state.dailyHadith!.text.length > 150
-                              ? "${state.dailyHadith!.text.substring(0, 150)}..."
-                              : state.dailyHadith!.text,
+                      str: state.dailyHadith!.text,
                       fontSize: 14,
                       color: KColor.black.color,
-                      maxLines: 5,
-                      overflow: TextOverflow.ellipsis,
+                      fontWeight: FontWeight.w400,
                     ),
                     SizedBox(height: 8.h),
                     GlobalText(
                       str: state.dailyHadith!.reference,
                       fontSize: 12,
                       color: KColor.grey.color,
+                      fontWeight: FontWeight.w500,
+                      fontStyle: FontStyle.italic,
                     ),
                   ],
                 );

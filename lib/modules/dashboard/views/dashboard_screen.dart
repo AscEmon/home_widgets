@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import '../bloc/dashboard_bloc.dart';
+import '../bloc/dashboard_event.dart';
 import '/global/widget/global_appbar.dart';
 import '/global/widget/global_text.dart';
-import '/global/widget/global_button.dart';
-import '/modules/hadith/bloc/hadith_bloc.dart';
-import '/modules/hadith/bloc/hadith_event.dart';
-import '/utils/app_routes.dart';
-import '/utils/navigation.dart';
+
 import '/utils/styles/k_colors.dart';
 import 'components/daily_hadith_card.dart';
 
@@ -26,25 +25,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _loadDailyHadith() {
-    context.read<HadithBloc>().add(const FetchDailyHadith());
+    context.read<DashboardBloc>().add(FetchDailyHadith());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: GlobalAppBar(
-        title: "Dashboard",
-      ),
+      appBar: GlobalAppBar(title: "Daily Hadith"),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             GlobalText(
-              str: "Welcome to Hadith App",
+              str: "Welcome to Daily Hadith App",
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: KColor.primary.color,
+              color: KColor.accent.color,
             ),
             SizedBox(height: 8.h),
             GlobalText(
@@ -55,21 +52,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             SizedBox(height: 24.h),
             const DailyHadithCard(),
             SizedBox(height: 24.h),
-            GlobalButton(
-              onPressed: () {
-                Navigation.push(
-                  context,
-                  appRoutes: AppRoutes.hadithList,
-                );
-              },
-              buttonText: "View All Hadith",
-              btnHeight: 48.h,
-            ),
           ],
         ),
       ),
     );
   }
-
 }
-

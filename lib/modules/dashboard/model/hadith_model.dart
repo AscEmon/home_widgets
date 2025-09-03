@@ -7,6 +7,7 @@ class HadithModel {
   final String chapter;
   final int bookNumber;
   final int hadithNumber;
+  final DateTime date;
 
   HadithModel({
     required this.id,
@@ -17,6 +18,7 @@ class HadithModel {
     required this.chapter,
     required this.bookNumber,
     required this.hadithNumber,
+    required this.date,
   });
 
   factory HadithModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class HadithModel {
       chapter: json['chapter'] ?? '',
       bookNumber: json['book_number'] ?? 0,
       hadithNumber: json['hadith_number'] ?? 0,
+      date: json['date'] ?? DateTime.now(),
     );
   }
 
@@ -60,7 +63,8 @@ class HadithResponse {
   factory HadithResponse.fromJson(Map<String, dynamic> json) {
     return HadithResponse(
       success: json['success'] ?? false,
-      data: (json['data'] as List?)
+      data:
+          (json['data'] as List?)
               ?.map((e) => HadithModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -90,7 +94,8 @@ class DailyHadith {
       text: json['text'] ?? '',
       narrator: json['narrator'] ?? '',
       reference: json['reference'] ?? '',
-      date: json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
+      date:
+          json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
     );
   }
 

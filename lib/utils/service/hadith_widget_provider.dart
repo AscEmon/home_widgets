@@ -1,6 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
-import '../model/hadith_widget_model.dart';
+import 'package:home_widgets/modules/dashboard/model/hadith_model.dart';
 
 class HadithWidgetProvider {
   static const String appGroupId = 'group.com.example.homeWidgets';
@@ -17,29 +19,32 @@ class HadithWidgetProvider {
   }
 
   // Update the widget with daily hadith data
-  static Future<bool> updateDailyHadithWidget(HadithWidgetModel hadith) async {
+  static Future<bool> updateDailyHadithWidget(HadithModel hadith) async {
     try {
       // Initialize widget with app group ID first
       await initializeWidget();
-      
+
       // Debug print to verify data being sent
       debugPrint('Updating widget with data:');
       debugPrint('Narrator: ${hadith.narrator}');
       debugPrint('Text: ${_truncateText(hadith.text)}');
       debugPrint('Reference: ${hadith.reference}');
-      
+
       // Save data to shared UserDefaults
       await HomeWidget.saveWidgetData(narratorKey, hadith.narrator);
       await HomeWidget.saveWidgetData(textKey, _truncateText(hadith.text));
       await HomeWidget.saveWidgetData(referenceKey, hadith.reference);
-      await HomeWidget.saveWidgetData(lastUpdatedKey, DateTime.now().toIso8601String());
-      
+      await HomeWidget.saveWidgetData(
+        lastUpdatedKey,
+        DateTime.now().toIso8601String(),
+      );
+
       // Request widget update
       final result = await HomeWidget.updateWidget(
         name: widgetKind,
         iOSName: 'MyHomeWidget',
       );
-      
+
       debugPrint('Widget update result: $result');
       return result ?? false;
     } catch (e) {
@@ -56,14 +61,14 @@ class HadithWidgetProvider {
   }
 
   // Handle widget clicked event
-  static Future<void> handleWidgetClicked(Function(int) onHadithSelected) async {
+  static Future<void> handleWidgetClicked(
+    Function(int) onHadithSelected,
+  ) async {
     try {
       final widgetData = await HomeWidget.getWidgetData<String>(dailyHadithKey);
       if (widgetData != null) {
-        final hadith = HadithWidgetModel.decode(widgetData);
-        if (hadith != null) {
-          onHadithSelected(hadith.id);
-        }
+        final hadith = HadithModel.fromJson(jsonDecode(widgetData));
+        onHadithSelected(hadith.id);
       }
     } catch (e) {
       // Handle error

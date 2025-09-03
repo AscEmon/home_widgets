@@ -7,8 +7,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '/constant/app_url.dart';
 import '/data_provider/pref_helper.dart';
-import '/modules/hadith/service/hadith_widget_provider.dart';
-import '/modules/hadith/service/hadith_widget_service.dart';
+import 'utils/service/hadith_widget_provider.dart';
+import 'utils/service/hadith_widget_service.dart';
 import '/utils/app_routes.dart';
 import '/utils/app_version.dart';
 import '/utils/enum.dart';
@@ -105,7 +105,7 @@ class _MyAppState extends State<MyApp>
         Future.delayed(const Duration(milliseconds: 500), () {
           Navigation.push(
             Navigation.key.currentContext!,
-            appRoutes: AppRoutes.hadithDetail,
+            appRoutes: AppRoutes.dashboard,
             arguments: hadithId,
           );
         });

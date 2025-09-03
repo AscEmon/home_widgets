@@ -129,7 +129,7 @@ class _MyAppState extends State<MyApp>
           builder: (ctx, child) {
             return BlocReinitializer(
               child: MaterialApp(
-                title: 'Hadith Widget',
+                title: 'Daily Hadith',
                 navigatorKey: Navigation.key,
                 debugShowCheckedModeBanner: false,
                 //localization

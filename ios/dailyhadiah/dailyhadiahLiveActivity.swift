@@ -1,6 +1,6 @@
 //
-//  MyHomeWidgetLiveActivity.swift
-//  MyHomeWidget
+//  dailyhadiahLiveActivity.swift
+//  dailyhadiah
 //
 //  Created by Sayed on 2/9/25.
 //
@@ -9,7 +9,7 @@ import ActivityKit
 import WidgetKit
 import SwiftUI
 
-struct MyHomeWidgetAttributes: ActivityAttributes {
+struct dailyhadiahAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         // Dynamic stateful properties about your activity go here!
         var emoji: String
@@ -19,9 +19,9 @@ struct MyHomeWidgetAttributes: ActivityAttributes {
     var name: String
 }
 
-struct MyHomeWidgetLiveActivity: Widget {
+struct dailyhadiahLiveActivity: Widget {
     var body: some WidgetConfiguration {
-        ActivityConfiguration(for: MyHomeWidgetAttributes.self) { context in
+        ActivityConfiguration(for: dailyhadiahAttributes.self) { context in
             // Lock screen/banner UI goes here
             VStack {
                 Text("Hello \(context.state.emoji)")
@@ -56,25 +56,25 @@ struct MyHomeWidgetLiveActivity: Widget {
     }
 }
 
-extension MyHomeWidgetAttributes {
-    fileprivate static var preview: MyHomeWidgetAttributes {
-        MyHomeWidgetAttributes(name: "World")
+extension dailyhadiahAttributes {
+    fileprivate static var preview: dailyhadiahAttributes {
+        dailyhadiahAttributes(name: "World")
     }
 }
 
-extension MyHomeWidgetAttributes.ContentState {
-    fileprivate static var smiley: MyHomeWidgetAttributes.ContentState {
-        MyHomeWidgetAttributes.ContentState(emoji: "😀")
+extension dailyhadiahAttributes.ContentState {
+    fileprivate static var smiley: dailyhadiahAttributes.ContentState {
+        dailyhadiahAttributes.ContentState(emoji: "😀")
      }
      
-     fileprivate static var starEyes: MyHomeWidgetAttributes.ContentState {
-         MyHomeWidgetAttributes.ContentState(emoji: "🤩")
+     fileprivate static var starEyes: dailyhadiahAttributes.ContentState {
+         dailyhadiahAttributes.ContentState(emoji: "🤩")
      }
 }
 
-#Preview("Notification", as: .content, using: MyHomeWidgetAttributes.preview) {
-   MyHomeWidgetLiveActivity()
+#Preview("Notification", as: .content, using: dailyhadiahAttributes.preview) {
+   dailyhadiahLiveActivity()
 } contentStates: {
-    MyHomeWidgetAttributes.ContentState.smiley
-    MyHomeWidgetAttributes.ContentState.starEyes
+    dailyhadiahAttributes.ContentState.smiley
+    dailyhadiahAttributes.ContentState.starEyes
 }

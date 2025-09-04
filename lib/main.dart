@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:home_widget/home_widget.dart';
-//localization
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '/constant/app_url.dart';
-import '/data_provider/pref_helper.dart';
+import 'package:home_widget/home_widget.dart';
+import 'package:home_widgets/constant/app_url.dart';
+import 'package:home_widgets/utils/enum.dart';
+import 'package:home_widgets/utils/styles/k_colors.dart';
+
+import 'data_provider/pref_helper.dart';
+import 'modules/dashboard/views/dashboard_screen.dart';
+import 'utils/app_routes.dart';
+import 'utils/app_version.dart';
+import 'utils/bloc_reinitalizer.dart';
+import 'utils/mixin/bloc_provider_mixin.dart';
+import 'utils/navigation.dart';
+import 'utils/network_connection.dart';
 import 'utils/service/hadith_widget_provider.dart';
 import 'utils/service/hadith_widget_service.dart';
-import '/utils/app_routes.dart';
-import '/utils/app_version.dart';
-import '/utils/enum.dart';
-import '/utils/navigation.dart';
-import '/utils/network_connection.dart';
-import '/utils/styles/k_colors.dart';
-import 'modules/dashboard/views/dashboard_screen.dart';
-import '/utils/mixin/bloc_provider_mixin.dart';
-import 'utils/bloc_reinitalizer.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,18 +33,27 @@ void main() async {
   // Setup widget callbacks
   HomeWidget.registerInteractivityCallback(backgroundCallback);
 
+  // Check if app was launched from widget
+  final launchedFromWidget = await HomeWidget.initiallyLaunchedFromHomeWidget();
+  if (launchedFromWidget == true) {
+    print('App was launched from widget');
+    Navigation.pushAndRemoveUntil(
+      Navigation.key.currentContext!,
+      appRoutes: AppRoutes.dashboard,
+    );
+  }
+
   runApp(const MyApp());
 }
 
 // Background callback for widget interactions
 Future<void> backgroundCallback(Uri? uri) async {
+  print('Background callback triggered with URI: $uri');
   if (uri?.host == 'hadith_widget_clicked') {
     // Handle widget click in background
-    final hadith = await HadithWidgetService.getDailyHadithForWidget();
-    if (hadith != null) {
-      // Store the hadith ID to be handled when app opens
-      await PrefHelper.setInt('widget_clicked_hadith_id', hadith.id);
-    }
+    print('Hadith widget was clicked!');
+
+    // You can add additional handling here
   }
 }
 
@@ -95,21 +103,14 @@ class _MyAppState extends State<MyApp>
   }
 
   Future<void> _checkWidgetLaunch() async {
-    // Check if app was launched from widget
-    final widgetData = await HomeWidget.initiallyLaunchedFromHomeWidget();
-    if (widgetData == true) {
-      // Handle widget launch
-      final hadithId = await PrefHelper.getInt('widget_clicked_hadith_id');
-      if (hadithId != null && hadithId > 0) {
-        // Navigate to hadith detail after a short delay to ensure app is initialized
-        Future.delayed(const Duration(milliseconds: 500), () {
-          Navigation.push(
-            Navigation.key.currentContext!,
-            appRoutes: AppRoutes.dashboard,
-            arguments: hadithId,
-          );
-        });
-      }
+    try {
+      // Check if app was launched from widget
+      Navigation.pushAndRemoveUntil(
+        Navigation.key.currentContext!,
+        appRoutes: AppRoutes.dashboard,
+      );
+    } catch (e) {
+      print('Error checking widget launch: $e');
     }
   }
 
@@ -132,9 +133,8 @@ class _MyAppState extends State<MyApp>
                 title: 'Daily Hadith',
                 navigatorKey: Navigation.key,
                 debugShowCheckedModeBanner: false,
+
                 //localization
-                supportedLocales: AppLocalizations.supportedLocales,
-                localizationsDelegates: AppLocalizations.localizationsDelegates,
                 locale:
                     (PrefHelper.getLanguage() == 1)
                         ? const Locale('en', 'US')

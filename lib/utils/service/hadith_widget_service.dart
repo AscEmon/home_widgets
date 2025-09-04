@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../modules/dashboard/model/hadith_model.dart';
+import 'hadith_widget_provider.dart';
 
 class HadithWidgetService {
   static const String _dailyHadithKey = 'daily_hadith_widget_data';
@@ -24,8 +26,15 @@ class HadithWidgetService {
       );
 
       final encodedData = widgetModel.toJson();
-      return await prefs.setString(_dailyHadithKey, jsonEncode(encodedData));
+      final result = await prefs.setString(_dailyHadithKey, jsonEncode(encodedData));
+      
+      // Also update the widget using HadithWidgetProvider
+      await HadithWidgetProvider.updateDailyHadithWidget(widgetModel);
+      
+      debugPrint('Saved daily hadith for widget: ${hadith.narrator}');
+      return result;
     } catch (e) {
+      debugPrint('Error saving daily hadith for widget: $e');
       return false;
     }
   }

@@ -180,70 +180,116 @@ struct dailyhadiahEntryView : View {
     var entry: Provider.Entry
     @Environment(\.colorScheme) var colorScheme
     
+    // Primary accent color - deep teal
     var accentColor: Color {
-        colorScheme == .dark ? Color(red: 0.4, green: 0.6, blue: 1.0) : Color(red: 0.0, green: 0.4, blue: 0.9)
+        colorScheme == .dark ? Color(red: 0.0, green: 0.65, blue: 0.45) : Color(red: 0.0, green: 0.55, blue: 0.35)
     }
     
+    // Background color - clean white/dark
     var backgroundColor: Color {
-        colorScheme == .dark ? Color(white: 0.15) : Color(white: 0.97)
+        colorScheme == .dark ? Color(red: 0.11, green: 0.11, blue: 0.12) : Color(red: 0.98, green: 0.98, blue: 0.98)
+    }
+    
+    // Main text color - high contrast
+    var textColor: Color {
+        colorScheme == .dark ? Color.white : Color(red: 0.1, green: 0.1, blue: 0.1)
+    }
+    
+    // Subtitle color - softer contrast
+    var subtitleColor: Color {
+        colorScheme == .dark ? Color(red: 0.7, green: 0.7, blue: 0.7) : Color(red: 0.4, green: 0.4, blue: 0.4)
+    }
+    
+    // Border color for card effect
+    var borderColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05)
+    }
+    
+    // Highlight color for narrator name
+    var highlightColor: Color {
+        colorScheme == .dark ? Color(red: 0.0, green: 0.7, blue: 0.5) : Color(red: 0.0, green: 0.6, blue: 0.4)
     }
     
     var body: some View {
         ZStack {
-            // Background with subtle gradient
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    backgroundColor,
-                    backgroundColor.opacity(0.8)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            // Background color fill
+            backgroundColor
+                .edgesIgnoringSafeArea(.all)
             
-            VStack(alignment: .leading, spacing: 10) {
-                // Header with icon
-                HStack(spacing: 6) {
-                    Image(systemName: "quote.bubble")
-                        .foregroundColor(accentColor)
-                        .font(.system(size: 14))
+            // Main content card with shadow and border
+            VStack(alignment: .leading, spacing: 0) {
+                // Narrator section with accent background
+                ZStack(alignment: .leading) {
+                    // Accent color background for narrator section
+                    Rectangle()
+                        .fill(accentColor)
+                        .frame(height: 36)
                     
-                    Text(entry.narrator)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(accentColor)
-                        .lineLimit(1)
-                    
-                    Spacer()
+                    HStack(spacing: 8) {
+                        // Quote icon
+                        Image(systemName: "quote.opening")
+                            .foregroundColor(.white)
+                            .font(.system(size: 14, weight: .bold))
+                        
+                        // Narrator name
+                        Text(entry.narrator)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 14)
                 }
                 
-                // Main hadith text
-                Text(entry.text)
-                    .font(.system(size: 13))
-                    .foregroundColor(colorScheme == .dark ? .white : .black)
-                    .lineLimit(6)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                
-                Spacer(minLength: 4)
-                
-                // Reference and last updated
-                VStack(alignment: .leading, spacing: 4) {
-                    if !entry.reference.isEmpty {
-                        Text(entry.reference)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(.gray)
-                            .italic()
-                            .lineLimit(1)
-                    }
+                // Content area with hadith text
+                VStack(alignment: .leading, spacing: 10) {
+                    // Main hadith text
+                    Text(entry.text)
+                        .font(.system(size: 14))
+                        .foregroundColor(textColor)
+                        .lineLimit(6)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 4)
                     
-                    HStack {
+                    Spacer(minLength: 1)
+                    
+                    // Divider line
+                    Rectangle()
+                        .fill(borderColor)
+                        .frame(height: 1)
+                    
+                    // Footer with reference and timestamp
+                    HStack(alignment: .bottom) {
+                        // Reference
+                        if !entry.reference.isEmpty {
+                            Text(entry.reference)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(highlightColor)
+                                .lineLimit(1)
+                        }
+                        
                         Spacer()
+                        
+                        // Updated timestamp
                         Text("Updated: \(formatDate(entry.date))")
                             .font(.system(size: 9))
-                            .foregroundColor(.gray)
+                            .foregroundColor(subtitleColor)
                     }
                 }
-                .padding(12)
+                .padding(EdgeInsets(top: 10, leading: 14, bottom: 12, trailing: 14))
             }
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.white.opacity(colorScheme == .dark ? 0.05 : 1))
+                    .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.1), radius: 3, x: 0, y: 1)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(borderColor, lineWidth: 1)
+            )
+            .padding(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
             .widgetURL(URL(string: "hadithwidget://hadith_widget_clicked"))
         }
     }

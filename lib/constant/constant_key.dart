@@ -42,7 +42,7 @@ extension AppConstantExtention on AppConstant {
       case AppConstant.TOKEN:
         return "TOKEN";
       case AppConstant.LANGUAGE:
-        return "language";
+        return "Accept-Language";
       case AppConstant.DD_MM_YYYY:
         return "dd-MM-yyyy";
       case AppConstant.DD_MM_YYYY_SLASH:

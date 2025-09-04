@@ -101,8 +101,8 @@ class _DailyHadithCardState extends State<DailyHadithCard> {
                   ),
                 );
               } else if (state.dailyHadith != null) {
-                // // Update the widget with the daily hadith
-                // _updateWidget(state.dailyHadith!);
+                // Update the widget with the daily hadith
+                WidgetAutoUpdateService.instance.forceUpdate();
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

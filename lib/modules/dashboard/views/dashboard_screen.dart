@@ -20,10 +20,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _loadDailyHadith();
-  }
-
-  void _loadDailyHadith() {
     context.read<DashboardBloc>().add(FetchDailyHadith());
   }
 

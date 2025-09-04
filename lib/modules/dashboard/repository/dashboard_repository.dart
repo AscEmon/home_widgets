@@ -13,15 +13,9 @@ class DashboardRepository implements IDashboardRepository {
   Future<HadithModel?> getDailyHadith() async {
     HadithModel? hadith;
 
-    final apiKey = 'SqD712P3E82xnwOAEOkGd5JZH8s9wRR24TqNFzjk';
     final builder = NetworkRequestBuilder()
         .setUrl(AppUrl.dailyHadith.url)
         .setMethod(Method.GET)
-        .setExtraHeaders({
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-API-Key': apiKey,
-        })
         .setOnSuccess((response) {
           final jsonData = json.decode(response.toString());
 

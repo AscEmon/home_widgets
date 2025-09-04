@@ -177,7 +177,10 @@ class ApiClient {
   }
 
   Map<String, String> _getHeaders() {
+    final apiKey = 'SqD712P3E82xnwOAEOkGd5JZH8s9wRR24TqNFzjk';
     Map<String, String> headers = {
+      'Accept': 'application/json',
+      'X-API-Key': apiKey,
       HttpHeaders.contentTypeHeader: AppConstant.APPLICATION_JSON.key,
       AppConstant.APP_VERSION.key: PrefHelper.getString(
         AppConstant.APP_VERSION.key,
@@ -185,10 +188,7 @@ class ApiClient {
       AppConstant.BUILD_NUMBER.key: PrefHelper.getString(
         AppConstant.BUILD_NUMBER.key,
       ),
-      AppConstant.LANGUAGE.key:
-          PrefHelper.getLanguage() == 1
-              ? AppConstant.EN.key
-              : AppConstant.BN.key,
+      AppConstant.LANGUAGE.key: AppConstant.BN.key,
     };
     String token = PrefHelper.getString(AppConstant.TOKEN.key);
     if (token.isNotEmpty == true) {

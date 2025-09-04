@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:home_widgets/constant/app_url.dart';
 import 'package:home_widgets/utils/enum.dart';
+import 'package:home_widgets/utils/extension.dart';
 
 import '../../../utils/network_request_builder.dart';
 import '../model/hadith_model.dart';
@@ -71,8 +72,7 @@ class DashboardRepository implements IDashboardRepository {
           }
         })
         .setOnFailed((error) {
-          // Handle error
-          print('Error fetching hadith: $error');
+          'Error fetching hadith: $error'.log();
         });
 
     await builder.executeNetworkRequest();

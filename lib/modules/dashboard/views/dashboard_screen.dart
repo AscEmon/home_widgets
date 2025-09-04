@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../bloc/dashboard_bloc.dart';
-import '../bloc/dashboard_event.dart';
 import '/global/widget/global_appbar.dart';
 import '/global/widget/global_text.dart';
-
 import '/utils/styles/k_colors.dart';
+import '../bloc/dashboard_bloc.dart';
+import '../bloc/dashboard_event.dart';
 import 'components/daily_hadith_card.dart';
 
 class DashboardScreen extends StatefulWidget {

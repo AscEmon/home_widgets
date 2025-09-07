@@ -1,6 +1,6 @@
 import 'package:home_widgets/utils/enum.dart';
 
-enum AppUrl { base, baseImage }
+enum AppUrl { base, baseImage, dailyHadith }
 
 extension AppUrlExtention on AppUrl {
   static String _baseUrl = "";
@@ -15,7 +15,7 @@ extension AppUrlExtention on AppUrl {
         break;
 
       case UrlLink.isDev:
-        _baseUrl = "";
+        _baseUrl = "https://api.sunnah.com/";
         _baseImageUrl = "";
 
         break;
@@ -32,6 +32,10 @@ extension AppUrlExtention on AppUrl {
         return _baseUrl;
       case AppUrl.baseImage:
         return _baseImageUrl;
+
+      case AppUrl.dailyHadith:
+        // Using a specific hadith number instead of random endpoint
+        return 'v1/collections/bukhari/hadiths/1';
     }
   }
 }

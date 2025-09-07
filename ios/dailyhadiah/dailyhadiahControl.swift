@@ -1,6 +1,6 @@
 //
-//  MyHomeWidgetControl.swift
-//  MyHomeWidget
+//  dailyhadiahControl.swift
+//  dailyhadiah
 //
 //  Created by Sayed on 2/9/25.
 //
@@ -9,8 +9,8 @@ import AppIntents
 import SwiftUI
 import WidgetKit
 
-struct MyHomeWidgetControl: ControlWidget {
-    static let kind: String = "com.example.homeWidgets.MyHomeWidget"
+struct dailyhadiahControl: ControlWidget {
+    static let kind: String = "com.sslwireless.homewidget.dailyhadiah"
 
     var body: some ControlWidgetConfiguration {
         AppIntentControlConfiguration(
@@ -30,7 +30,7 @@ struct MyHomeWidgetControl: ControlWidget {
     }
 }
 
-extension MyHomeWidgetControl {
+extension dailyhadiahControl {
     struct Value {
         var isRunning: Bool
         var name: String
@@ -38,12 +38,12 @@ extension MyHomeWidgetControl {
 
     struct Provider: AppIntentControlValueProvider {
         func previewValue(configuration: TimerConfiguration) -> Value {
-            MyHomeWidgetControl.Value(isRunning: false, name: configuration.timerName)
+            dailyhadiahControl.Value(isRunning: false, name: configuration.timerName)
         }
 
         func currentValue(configuration: TimerConfiguration) async throws -> Value {
             let isRunning = true // Check if the timer is running
-            return MyHomeWidgetControl.Value(isRunning: isRunning, name: configuration.timerName)
+            return dailyhadiahControl.Value(isRunning: isRunning, name: configuration.timerName)
         }
     }
 }

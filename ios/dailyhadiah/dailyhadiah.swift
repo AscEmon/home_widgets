@@ -1,0 +1,338 @@
+//
+//  dailyhadiah.swift
+//  dailyhadiah
+//
+//  Created by Sayed on 2/9/25.
+//
+
+import WidgetKit
+import SwiftUI
+import Intents
+
+// Helper function to format date in a way compatible with older iOS versions
+func formatDate(_ date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.dateStyle = .short
+    formatter.timeStyle = .short
+    return formatter.string(from: date)
+}
+
+struct Provider: TimelineProvider {
+    typealias Entry = SimpleEntry
+    
+    // Method to retrieve the data from flutter
+    private func getDataFromFlutter() -> SimpleEntry {
+        // Try to get data from both app group and standard UserDefaults
+        let appGroupDefaults = UserDefaults(suiteName: "group.com.sslwireless.homewidget")
+        let standardDefaults = UserDefaults.standard
+        
+        // Print all keys in UserDefaults for debugging
+        if let appGroupDefaults = appGroupDefaults {
+            let keys = appGroupDefaults.dictionaryRepresentation().keys
+            print("Available keys in App Group UserDefaults: \(keys)")
+            
+            // Check for the refresh timestamp (used to force widget updates)
+            if let timestamp = appGroupDefaults.string(forKey: "widget_refresh_timestamp") {
+                print("Found widget refresh timestamp: \(timestamp)")
+            }
+        }
+        
+        // First try to get the complete JSON data
+        if let jsonString = appGroupDefaults?.string(forKey: "daily_hadith") ?? standardDefaults.string(forKey: "daily_hadith") {
+            print("Found complete JSON data, length: \(jsonString.count) characters")
+            
+            // Try to parse the JSON
+            do {
+                if let jsonData = jsonString.data(using: .utf8),
+                   let jsonDict = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
+                    
+                    let narrator = jsonDict["narrator"] as? String ?? "Unknown"
+                    let text = jsonDict["text"] as? String ?? "No hadith available"
+                    let reference = jsonDict["reference"] as? String ?? ""
+                    
+                    print("Successfully parsed JSON data - Narrator: \(narrator), Text: \(String(describing: text.prefix(20)))...")
+                    
+                    return SimpleEntry(
+                        date: Date(),
+                        narrator: narrator,
+                        text: text,
+                        reference: reference
+                    )
+                }
+            } catch {
+                print("Error parsing JSON: \(error.localizedDescription)")
+            }
+        }
+        
+        // Fallback to individual fields if JSON parsing fails
+        print("Falling back to individual fields")
+        
+        // Try multiple key variations - Flutter might be saving with different key formats
+        let possibleNarratorKeys = ["narrator", "hadith_narrator", "daily_hadith_narrator"]
+        let possibleTextKeys = ["text", "hadith_text", "daily_hadith_text"]
+        let possibleReferenceKeys = ["reference", "hadith_reference", "daily_hadith_reference"]
+        let possibleDateKeys = ["last_updated", "date", "updated_at", "timestamp"]
+        
+        // Function to try multiple keys in both UserDefaults
+        func getStringFromKeys(_ keys: [String]) -> String? {
+            for key in keys {
+                if let value = appGroupDefaults?.string(forKey: key) {
+                    print("Found value for key '\(key)' in app group defaults")
+                    return value
+                }
+                if let value = standardDefaults.string(forKey: key) {
+                    print("Found value for key '\(key)' in standard defaults")
+                    return value
+                }
+            }
+            return nil
+        }
+        
+        let narrator = getStringFromKeys(possibleNarratorKeys)
+        let text = getStringFromKeys(possibleTextKeys)
+        let reference = getStringFromKeys(possibleReferenceKeys)
+        let lastUpdated = getStringFromKeys(possibleDateKeys)
+        
+        print("Debug - Raw values from UserDefaults:")
+        print("narrator: \(narrator ?? "nil")")
+        print("text: \(text ?? "nil")")
+        print("reference: \(reference ?? "nil")")
+        print("last_updated: \(lastUpdated ?? "nil")")
+        
+        // Use fallback values if nothing found
+        let finalNarrator = narrator ?? "Unknown"
+        let finalText = text ?? "No hadith available..."
+        let finalReference = reference ?? ""
+        
+        var date = Date()
+        if let lastUpdatedString = lastUpdated {
+            // Try multiple date formats
+            let iso8601Formatter = ISO8601DateFormatter()
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+            
+            // Try ISO8601 format first
+            if let parsedDate = iso8601Formatter.date(from: lastUpdatedString) {
+                date = parsedDate
+            } 
+            // Then try custom format
+            else if let parsedDate = dateFormatter.date(from: lastUpdatedString) {
+                date = parsedDate
+            }
+        }
+        
+        print("Widget data loaded - Narrator: \(finalNarrator), Text: \(finalText)")
+        return SimpleEntry(date: date, narrator: finalNarrator, text: finalText, reference: finalReference)
+    }
+    
+    // Required: preview placeholder
+    func placeholder(in context: Context) -> SimpleEntry {
+        SimpleEntry(date: Date(), narrator: "Loading...", text: "Loading daily hadith...", reference: "")
+    }
+
+    // Required: widget gallery preview
+    func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
+        let entry = getDataFromFlutter()
+        print("Widget snapshot requested - providing data")
+        completion(entry)
+    }
+
+    // Required: timeline for widget updates
+    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
+        let entry = getDataFromFlutter()
+        
+        // Determine refresh interval based on context
+        var refreshInterval: TimeInterval
+        
+        switch context.family {
+        case .systemSmall, .systemMedium, .systemLarge:
+            // More frequent updates for visible widgets
+            refreshInterval = 15 * 60 // 15 minutes
+        default:
+            // Less frequent updates for other contexts
+            refreshInterval = 60 * 60 // 1 hour
+        }
+        
+        // If we have no data, try to refresh more frequently
+        if entry.text == "No hadith available" {
+            refreshInterval = 5 * 60 // 5 minutes
+            print("No hadith data available, setting shorter refresh interval: \(refreshInterval) seconds")
+        } else {
+            print("Hadith data available, setting normal refresh interval: \(refreshInterval) seconds")
+        }
+        
+        // Create a timeline with one entry that refreshes according to our policy
+        let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(refreshInterval)))
+        completion(timeline)
+    }
+}
+
+// This represents the data that is passed to the widget
+struct SimpleEntry: TimelineEntry {
+    let date: Date
+    let narrator: String
+    let text: String
+    let reference: String
+}
+
+// This represents the view that is displayed in the widget
+struct dailyhadiahEntryView : View {
+    var entry: Provider.Entry
+    @Environment(\.colorScheme) var colorScheme
+    
+    // Primary accent color - deep teal
+    var accentColor: Color {
+        colorScheme == .dark ? Color(red: 0.0, green: 0.65, blue: 0.45) : Color(red: 0.0, green: 0.55, blue: 0.35)
+    }
+    
+    // Background color - clean white/dark
+    var backgroundColor: Color {
+        colorScheme == .dark ? Color(red: 0.11, green: 0.11, blue: 0.12) : Color(red: 0.98, green: 0.98, blue: 0.98)
+    }
+    
+    // Main text color - high contrast
+    var textColor: Color {
+        colorScheme == .dark ? Color.white : Color(red: 0.1, green: 0.1, blue: 0.1)
+    }
+    
+    // Subtitle color - softer contrast
+    var subtitleColor: Color {
+        colorScheme == .dark ? Color(red: 0.7, green: 0.7, blue: 0.7) : Color(red: 0.4, green: 0.4, blue: 0.4)
+    }
+    
+    // Border color for card effect
+    var borderColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05)
+    }
+    
+    // Highlight color for narrator name
+    var highlightColor: Color {
+        colorScheme == .dark ? Color(red: 0.0, green: 0.7, blue: 0.5) : Color(red: 0.0, green: 0.6, blue: 0.4)
+    }
+    
+    var body: some View {
+        ZStack {
+            // Background color fill
+            backgroundColor
+                .edgesIgnoringSafeArea(.all)
+            
+            // Main content card with shadow and border
+            VStack(alignment: .leading, spacing: 0) {
+                // Narrator section with accent background
+                ZStack(alignment: .leading) {
+                    // Accent color background for narrator section
+                    Rectangle()
+                        .fill(accentColor)
+                        .frame(height: 36)
+                    
+                    HStack(spacing: 8) {
+                        // Quote icon
+                        Image(systemName: "quote.opening")
+                            .foregroundColor(.white)
+                            .font(.system(size: 14, weight: .bold))
+                        
+                        // Narrator name
+                        Text(entry.narrator)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 14)
+                }
+                
+                // Content area with hadith text
+                VStack(alignment: .leading, spacing: 10) {
+                    // Main hadith text
+                    Text(entry.text)
+                        .font(.system(size: 14))
+                        .foregroundColor(textColor)
+                        .lineLimit(6)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 4)
+                    
+                    Spacer(minLength: 1)
+                    
+                    // Divider line
+                    Rectangle()
+                        .fill(borderColor)
+                        .frame(height: 1)
+                    
+                    // Footer with reference and timestamp
+                    HStack(alignment: .bottom) {
+                        // Reference
+                        if !entry.reference.isEmpty {
+                            Text(entry.reference)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(highlightColor)
+                                .lineLimit(1)
+                        }
+                        
+                        Spacer()
+                        
+                        // Updated timestamp
+                        Text("Updated: \(formatDate(entry.date))")
+                            .font(.system(size: 9))
+                            .foregroundColor(subtitleColor)
+                    }
+                }
+                .padding(EdgeInsets(top: 10, leading: 14, bottom: 12, trailing: 14))
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.white.opacity(colorScheme == .dark ? 0.05 : 1))
+                    .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.1), radius: 3, x: 0, y: 1)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(borderColor, lineWidth: 1)
+            )
+            .padding(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
+            .widgetURL(URL(string: "hadithwidget://hadith_widget_clicked"))
+        }
+    }
+}
+
+// The main widget configuration
+struct dailyhadiah: Widget {
+    let kind: String = "dailyhadiah"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+            if #available(iOS 17.0, *) {
+                dailyhadiahEntryView(entry: entry)
+                    .containerBackground(.fill.tertiary, for: .widget)
+            } else {
+                dailyhadiahEntryView(entry: entry)
+                    .padding()
+                    .background(Color(UIColor.systemBackground))
+            }
+        }
+        .supportedFamilies([.systemSmall, .systemMedium])
+        .configurationDisplayName("Daily Hadith")
+        .description("Displays a daily Hadith from Bukhari collection")
+    }
+}
+
+//extension ConfigurationAppIntent {
+//    fileprivate static var smiley: ConfigurationAppIntent {
+//        let intent = ConfigurationAppIntent()
+//        intent.title = "0"
+//        return intent
+//    }
+//    
+//    fileprivate static var starEyes: ConfigurationAppIntent {
+//        let intent = ConfigurationAppIntent()
+//        intent.title = "0"
+//        return intent
+//    }
+//}
+
+#Preview(as: .systemSmall) {
+    dailyhadiah()
+} timeline: {
+    SimpleEntry(date: .now, narrator: "Abu Hurairah", text: "The best of you are those who are best to their families.", reference: "Bukhari: 123")
+    SimpleEntry(date: .now, narrator: "Aisha", text: "The most beloved of deeds to Allah is that which is done regularly, even if it is small.", reference: "Bukhari: 456")
+}
